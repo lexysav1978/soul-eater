@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>Пожиратель душ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+<button id="muteBtn" title="Выключить звук (M)">🔊</button>
+
+<div id="hud" class="hidden">
+  <div id="topleft" class="hud">
+    <div id="dayLabel">День 1</div>
+    <div id="timebar"><div id="timefill"></div></div>
+    <div id="timeText"></div>
+    <div id="quest"></div>
+    <div id="goal"></div>
+  </div>
+  <canvas id="minimap" class="hud" width="180" height="180"></canvas>
+  <div id="bars" class="hud">
+    <div class="lbl">Страх</div><div class="bar"><div id="fearfill"></div></div>
+    <div class="lbl">Выносливость</div><div class="bar"><div id="stamfill"></div></div>
+  </div>
+  <div id="inv" class="hud"></div>
+  <div id="prompt" class="hud"></div>
+  <div id="msgs" class="hud"></div>
+  <div id="crosshair" class="hud"></div>
+  <div id="subtitle" class="hud"></div>
+  <div id="planeHint" class="hud hidden"></div>
+  <div id="dialog" class="hud"><div class="who"></div><div class="txt"></div><div class="hint">[E] дальше</div></div>
+  <div id="help" class="hud">WASD — идти · Shift — бег · Пробел — прыжок · E / ЛКМ — действие · 1-3 / колесо — инструмент · Q — убрать · C — крафт · F — фонарик · M — звук · Esc — пауза</div>
+</div>
+
+<div id="book" class="hidden">
+  <div class="bookInner">
+    <div class="page left"><div class="pt"></div><div class="pn"></div></div>
+    <div class="page right"><div class="pt"></div><div class="pn"></div></div>
+  </div>
+  <div class="bookHint">← → (A / D) — листать · E — закрыть книжку</div>
+</div>
+
+<div id="titleCard" class="fx"><div class="tc1">ПОЖИРАТЕЛЬ ДУШ</div><div class="tc2">ЧАСТЬ ВТОРАЯ</div><div class="tc3">Рай</div></div>
+<div id="introText" class="fx"></div>
+<div id="skipHint" class="fx">[Пробел] — пропустить заставку</div>
+<div id="bossBar" class="hud hidden"><div class="bn">ПОЖИРАТЕЛЬ ДУШ</div><div class="bb"><div id="bossFill"></div></div></div>
+
+<div id="touchLayer" class="hidden"></div>
+<div id="touchUI" class="hidden">
+  <div id="joyBase"><div id="joyKnob"></div></div>
+  <div id="tMain">
+    <button class="tb act" data-key="KeyE">✋</button>
+    <button class="tb jump" data-key="Space">⤒</button>
+    <button class="tb tools" data-key="Tools">⚒</button>
+    <button class="tb light" data-key="KeyF">🔦</button>
+    <button class="tb craftb" data-key="KeyC">🔨</button>
+  </div>
+  <div id="tTop"><button class="tb sm muteT" data-key="Mute">🔊</button><button class="tb sm" data-key="Full">⛶</button><button class="tb sm" data-key="Pause">⏸</button></div>
+  <div id="ctxBtns"></div>
+</div>
+<div id="rotateHint" class="hidden"><div class="ri">📱</div>Поверни телефон горизонтально</div>
+
+<div id="vignette" class="fx"></div>
+<div id="flash" class="fx"></div>
+<canvas id="jump" class="fx"></canvas>
+<div id="fade" class="fx"><div id="fadeText"></div></div>
+
+<div id="title" class="menu">
+  <div class="menuLeft">
+    <h1>ПОЖИРАТЕЛЬ<br>ДУШ</h1>
+    <p class="sub">Помогай мальчику. Не дай ему стать чудовищем.<br>Переживи 99 ночей.</p>
+    <div class="menuBtns">
+      <button id="btnNew" class="big">▶ Играть</button>
+      <button id="btnCont" class="big hidden">⟳ Продолжить</button>
+      <button id="btnPart2" class="big part2 hidden">✦ Вторая часть</button>
+      <button id="btnFilms" class="big">🎬 Мультики</button>
+      <button id="btnSkins" class="big">☠ Скины <span id="skinBadge" class="badge hidden">NEW</span></button>
+    </div>
+    <div class="cmdRow">
+      <span class="cmdPrompt">&gt;</span>
+      <input id="cmdInput" type="text" placeholder="Введите команду..." autocomplete="off" spellcheck="false">
+      <button id="cmdGo" title="Выполнить">⏎</button>
+    </div>
+    <div id="cmdErr" class="cmdErr"></div>
+    <div class="controls">
+      <div><b>WASD</b> — ходить</div><div><b>Мышь</b> — камера</div>
+      <div><b>Shift</b> — бег</div><div><b>E / ЛКМ</b> — действие</div>
+      <div><b>C</b> — крафт</div><div><b>F</b> — фонарик</div>
+      <div><b>Пробел</b> — прыжок</div><div><b>1 2 3</b> — топор, кирка, лопата</div><div><b>Колесо</b> — сменить инструмент</div>
+    </div>
+    <p class="warn">Играй в наушниках. Выключи свет.</p>
+    <p id="loadErr" class="warn hidden">Не удалось загрузить Three.js — нужен интернет при первом запуске.</p>
+  </div>
+  <div class="menuRight">
+    <div class="stage">
+      <canvas id="skinPreview" width="420" height="560"></canvas>
+      <div class="pedestal"></div>
+    </div>
+    <div id="skinRarity" class="rarity"></div>
+    <div id="skinName" class="skinName"></div>
+    <div id="skinDesc" class="skinDesc"></div>
+  </div>
+</div>
+
+<div id="skins" class="overlay hidden">
+  <div class="skinsHead">
+    <h2>Выбор персонажа</h2>
+    <div id="skinCount"></div>
+    <button id="btnSkinsBack">← Назад</button>
+  </div>
+  <div id="skinGrid"></div>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <h2>Пауза</h2>
+  <button id="btnResume">Вернуться в игру</button>
+  <button id="btnMutePause">🔊 Звук: включён</button>
+  <button id="btnMenu">Сохранить и выйти в меню</button>
+</div>
+
+<div id="craft" class="overlay hidden">
+  <div class="panel">
+    <h2>Крафт</h2>
+    <div id="recipes"></div>
+    <button id="btnCloseCraft">Закрыть [C]</button>
+  </div>
+</div>
+
+<div id="part2" class="overlay hidden">
+  <h1 class="p2title">ПОЖИРАТЕЛЬ ДУШ<br><span>ЧАСТЬ ВТОРАЯ</span></h1>
+  <p class="sub p2sub">Пожиратель забрал твою душу. Но ты не исчез.<br>Ты проснулся там, где светло и тихо. В раю.<br>Верни свою душу — даже если за ней придётся спуститься в Бездну.</p>
+  <div class="btns">
+    <button id="btnP2New">▶ Начать</button>
+    <button id="btnP2Cont" class="hidden">⟳ Продолжить</button>
+    <button id="btnPart2Back">← Назад</button>
+  </div>
+</div>
+
+<div id="films" class="overlay hidden">
+  <h2>Мультики</h2>
+  <div class="filmList">
+    <div class="film" data-film="fun">
+      <div class="fIcon">😂</div>
+      <div class="fName">Один день из жизни чудовища</div>
+      <div class="fDesc">Смешной мультик. Пижама, пицца, брейк-данс. 3:21</div>
+      <button>▶ Смотреть</button>
+    </div>
+    <div class="film scary" data-film="horror">
+      <div class="fIcon">👁</div>
+      <div class="fName">Он уже здесь</div>
+      <div class="fDesc">Страшный мультик-ужастик. Громкие звуки! 2:55</div>
+      <button>▶ Смотреть… если не страшно</button>
+    </div>
+    <div class="film scary" data-film="door">
+      <div class="fIcon">🚪</div>
+      <div class="fName">Дверь</div>
+      <div class="fDesc">Только страшная музыка. Чудовище идёт к двери... 2:43</div>
+      <button>▶ Слушать и смотреть</button>
+    </div>
+  </div>
+  <button id="filmsBack">← Назад</button>
+</div>
+
+<div id="tpMenu" class="overlay hidden">
+  <div class="panel tpPanel">
+    <h2>Телепорт</h2>
+    <button class="big tpBtn" data-tp="village">🏚 Телепортироваться в деревню</button>
+    <button class="big tpBtn" data-tp="plane">✈ Телепортироваться в самолёт</button>
+    <button class="big tpBtn" data-tp="island">🏝 Телепортироваться на остров</button>
+    <button id="tpClose">Отмена</button>
+  </div>
+</div>
+
+<div id="ending" class="overlay hidden">
+  <h1 id="endTitle">РАССВЕТ</h1>
+  <div id="endText"></div>
+  <div class="btns">
+    <button id="btnCartoon" class="cartoonBtn">▶ Смотреть мультик</button>
+    <button id="btnAgain">В главное меню</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/models.js"></script>
+<script src="js/world.js"></script>
+<script src="js/plane.js"></script>
+<script src="js/island.js"></script>
+<script src="js/heaven.js"></script>
+<script src="js/cartoon.js"></script>
+<script src="js/horror.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
