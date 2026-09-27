@@ -2679,7 +2679,7 @@
     }
     const g = H2.guardian.position;
     if (d(g.x, g.z) < 3) return { label: 'Поговорить с Хранителем', fn: talkGuardian };
-    for (let i = 0; i < 3; i++) { const s = H2.shards[i]; if (s.visible && d(s.position.x, s.position.z) < 2.3) return { label: 'Взять осколок света', fn: () => takeShard(i) }; }
+    for (let i = 0; i < 3; i++) { const s = H2.shards[i]; if (s.visible && d(s.position.x, s.position.z) < (i === 1 ? 4 : 2.3)) return { label: 'Взять осколок света', fn: () => takeShard(i) }; }
     if (d(H2.bellStand.x, H2.bellStand.z) < 2) {
       if (P2.solved[0]) return null;
       return P2.melody ? { label: 'Слушай...', fn: null } : { label: 'Послушать мелодию колоколов', fn: playMelody };
@@ -2702,6 +2702,8 @@
       P2.stage = 'arena'; P2.hp = 100; P2.bossHp = 100;
       resetBossVisuals();
       player.pos.set(H2.arenaSpawn.x, 0, H2.arenaSpawn.z); camYaw = 0; camPitch = 0.05;
+      player.vy = 0; player.grounded = true; player.model.position.copy(player.pos);
+      P2.falling = false; setTimeout(() => { P2.entering = false; }, 700);
       P2.boss = { state: 'intro', t: 5, tx: 0, tz: 0, orbT: 4 };
       $('bossBar').classList.remove('hidden');
       Sound.pad(false); Sound.growl(1);
@@ -2964,7 +2966,8 @@
       updateDying(dt);
       updateCamera(dt);
     } else {
-      if (P2.falling) { player.pos.y -= dt * 14; player.model.position.copy(player.pos); }
+      if (P2.entering) { /* переход через врата — стоим на месте */ }
+      else if (P2.falling) { player.pos.y -= dt * 14; player.model.position.copy(player.pos); }
       else {
         updatePlayer(dt);
         if (player.grounded && !H2.onGround(player.pos.x, player.pos.z, arena)) fall();
@@ -3016,7 +3019,7 @@
       // врата
       H2.doors.forEach((d, i) => { d.rotation.y = Util.lerp(d.rotation.y, P2.placed ? (i === 0 ? -1.6 : 1.6) : 0, Math.min(1, dt * 1.5)); });
       if (P2.placed) H2.portal.material.opacity = 0.45 + Math.sin(tt * 3) * 0.15;
-      if (P2.placed && !P2.falling && player.pos.z > H2.gate.z + 2.8 && Math.abs(player.pos.x - H2.HX) < 3.2) { P2.falling = true; enterArena(false); setTimeout(() => { P2.falling = false; }, 1400); }
+      if (P2.placed && !P2.falling && !P2.entering && player.pos.z > H2.gate.z + 2.8 && Math.abs(player.pos.x - H2.HX) < 3.2) { P2.entering = true; enterArena(false); }
     } else if (!P2.dying) updateBoss(dt);
     current = P2.dying ? null : heavenInteraction();
     Sound.update(dt, arena ? 1 : 0, arena ? 35 : 0, false, !arena);
