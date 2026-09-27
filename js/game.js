@@ -3026,16 +3026,35 @@
   }
 
   // ---------- мобильная версия: сенсорное управление ----------
-  function goFullscreen() {
-    if (!IS_TOUCH) return;
+  // Полный экран. Вызывать только из клика или отпускания пальца — иначе браузер откажет.
+  const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches) || navigator.standalone === true;
+  const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function lockLandscape() { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* не поддерживается */ } }
+  function goFullscreen(toggle) {
+    if (!IS_TOUCH || isStandalone()) return;
+    const el = document.documentElement;
     try {
-      const el = document.documentElement;
-      if (!document.fullscreenElement && el.requestFullscreen) {
-        el.requestFullscreen({ navigationUI: 'hide' }).then(() => {
-          try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* не поддерживается */ }
-        }).catch(() => {});
+      if (fsElement()) {
+        if (toggle) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        return;
       }
-    } catch (e) { /* не поддерживается */ }
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) {
+        const p = req.call(el, { navigationUI: 'hide' });
+        if (p && p.then) p.then(lockLandscape).catch(() => { if (toggle) showFsHelp(); });
+        else lockLandscape();
+      } else if (toggle) showFsHelp();
+    } catch (e) { if (toggle) showFsHelp(); }
+  }
+  function showFsHelp() {
+    const otherIOSBrowser = IS_IOS && /YaBrowser|CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
+    const txt = otherIOSBrowser
+      ? 'На iPhone браузеры не могут открыть игру на весь экран — это запрет Apple. Но есть способ: открой эту ссылку в Safari, нажми «Поделиться» ⬆ → «На экран Домой». Запускай игру с иконки на экране — она будет на весь экран, как приложение.'
+      : IS_IOS
+      ? 'На iPhone полный экран включается так: нажми «Поделиться» ⬆ внизу Safari → «На экран Домой». Потом запускай игру с иконки — она откроется на весь экран, как приложение.'
+      : 'Браузер не разрешил полный экран. Попробуй меню браузера ⋮ → «Добавить на главный экран» и запускай игру с иконки.';
+    const el = $('fsHelp'); el.querySelector('.t').textContent = txt; el.classList.remove('hidden');
   }
   if (IS_TOUCH) {
     document.body.classList.add('touch');
@@ -3047,15 +3066,16 @@
         e.preventDefault(); e.stopPropagation(); b.classList.add('on');
         if (code === 'Tools') cycleTool(1);
         else if (code === 'Pause') { if (state === 'play') { state = 'paused'; $('pause').classList.remove('hidden'); save(); } }
-        else if (code === 'Full') goFullscreen();
         else if (code === 'Mute') toggleMute();
         else fireKey(code, true);
       }, { passive: false });
-      const up = e => { e.preventDefault(); b.classList.remove('on'); if (isKey(code)) fireKey(code, false); };
+      const up = e => { e.preventDefault(); b.classList.remove('on'); if (isKey(code)) fireKey(code, false); if (code === 'Full' && e.type === 'touchend') goFullscreen(true); };
       b.addEventListener('touchend', up, { passive: false });
       b.addEventListener('touchcancel', up, { passive: false });
     }
     document.querySelectorAll('#touchUI [data-key]').forEach(bindBtn);
+    $('fsHelpOk').onclick = () => $('fsHelp').classList.add('hidden');
+    if (isStandalone()) document.querySelectorAll('[data-key="Full"]').forEach(b => b.classList.add('hidden'));
 
     // Джойстик (левая половина) и камера (правая половина)
     const layer = $('touchLayer'), base = $('joyBase'), knob = $('joyKnob');

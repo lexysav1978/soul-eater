@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0406"/>
+  <radialGradient id="g" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#3a0a10"/><stop offset="1" stop-color="#0a0406"/></radialGradient>
+  <rect width="512" height="512" rx="96" fill="url(#g)"/>
+  <path d="M170 150 Q120 60 140 30 Q160 90 205 130Z M342 150 Q392 60 372 30 Q352 90 307 130Z" fill="#d8d0c0"/>
+  <ellipse cx="256" cy="250" rx="130" ry="120" fill="#1a1216"/>
+  <circle cx="205" cy="230" r="26" fill="#ff2a10"/><circle cx="307" cy="230" r="26" fill="#ff2a10"/>
+  <circle cx="205" cy="230" r="9" fill="#fff"/><circle cx="307" cy="230" r="9" fill="#fff"/>
+  <path d="M180 300 Q256 360 332 300 Q256 330 180 300Z" fill="#fff"/>
+  <text x="256" y="455" font-family="Georgia,serif" font-size="54" fill="#c01818" text-anchor="middle" letter-spacing="6">ДУШИ</text>
+</svg>

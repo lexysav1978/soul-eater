@@ -330,3 +330,7 @@ body.touch .controls { display: none; }
 }
 #muteBtn.muted, #btnMutePause.muted { border-color: #555; color: #999; }
 body.playing #muteBtn { display: none; }
+
+#fsHelp { z-index: 45; }
+#fsHelp .panel { max-width: 440px; text-align: center; }
+#fsHelp .t { font-size: 17px; line-height: 1.5; color: #d8d0c0; }
